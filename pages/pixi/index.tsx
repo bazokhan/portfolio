@@ -6,6 +6,9 @@ type StageProps = {
   height?: number;
 };
 
+// Dynamic import because the react-pixi library is not compatible with SSR
+// Then is used to extract the variable we need which is Stage
+// srr: false option must be specified, there's a loading option, but it always gave me errors
 const Stage: React.ComponentType<StageProps> = dynamic(
   () => import("@inlet/react-pixi").then((pixi) => pixi.Stage),
   {
@@ -16,12 +19,14 @@ const JetFighter = dynamic(() => import("../../components/JetFighter"), {
   ssr: false,
 });
 
-const [width, height] = [500, 500];
+const [width, height] = [1000, 500];
 
 const PixiPage = () => (
-  <Stage width={width} height={height}>
-    <JetFighter />
-  </Stage>
+  <div>
+    <Stage width={width} height={height}>
+      <JetFighter />
+    </Stage>
+  </div>
 );
 
 export default PixiPage;
