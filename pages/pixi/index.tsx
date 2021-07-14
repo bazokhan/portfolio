@@ -22,8 +22,8 @@ const JetFighter = dynamic(() => import("../../components/JetFighter"), {
 const [width, height] = [1000, 500];
 
 const PixiPage = () => (
-  <div>
-    <Stage width={width} height={height}>
+  <div className="w-full h-full border border-[yellow]">
+    <Stage width={1000}>
       <JetFighter />
     </Stage>
   </div>

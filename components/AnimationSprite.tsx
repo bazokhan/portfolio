@@ -21,7 +21,12 @@ const AnimationSprite: React.FC<AnimatedSpriteProps> = memo(
     }, [isPlaying]);
 
     return (
-      <AnimatedSprite isPlaying={isPlaying} ref={animationSprite} {...props} />
+      <AnimatedSprite
+        isPlaying={isPlaying}
+        scale={2}
+        ref={animationSprite}
+        {...props}
+      />
     );
   }
 );
