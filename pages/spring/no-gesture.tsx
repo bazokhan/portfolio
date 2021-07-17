@@ -1,20 +1,46 @@
-import { useState } from "react";
-import { animated, config, to, useSpring } from "react-spring";
+import { useEffect, useState } from "react";
+import {
+  animated,
+  config,
+  to,
+  useChain,
+  useSpring,
+  useSpringRef,
+} from "react-spring";
 import clamp from "lodash.clamp";
 
 const SpringPage = () => {
-  const [reverse, setReverse] = useState(false);
+  const springRef = useSpringRef();
+  const [isPaused, setIsPaused] = useState(false);
   const [configKey, setConfigKey] = useState("wobbly");
-  const styles = useSpring({
-    to: { counter: 1000, x: 255, scale: 2 },
-    from: { counter: 0, x: 0, scale: 1 },
-    reset: true,
-    reverse,
-    delay: 200,
-    config: config[configKey],
-    onRest: () => setReverse(!reverse),
-  });
-  console.log(styles);
+  const [styles, api] = useSpring(
+    {
+      ref: springRef,
+      to: { counter: 1000, x: 255, scale: 2 },
+      from: { counter: 0, x: 0, scale: 1 },
+      //   reset: true,
+      //   reverse,
+      // loop: true,
+      loop: { reverse: true },
+      delay: 200,
+      config: { ...config[configKey], friction: 10, duration: 1000, mass: 5 },
+      //   onRest: () => setReverse(!reverse),
+    },
+    [configKey]
+  );
+
+  useChain([springRef]);
+
+  useEffect(() => {
+    if (isPaused) {
+      const pause = api.pause();
+      console.log({ pause });
+    } else {
+      const resume = api.resume();
+      console.log({ resume });
+    }
+  }, [api, isPaused]);
+
   return (
     <div className="w-screen h-screen overflow-hidden border-2 border-green-800 bg-black relative">
       <div className="absolute right-0 top-0 flex flex-col">
@@ -50,8 +76,17 @@ const SpringPage = () => {
             clamp(x * 3 + 200, 0, process.browser ? window.innerWidth : 0)
           ),
         }}
-        className="absolute w-[200px] h-[200px]"
+        className="relative w-[200px] h-[200px]"
       ></animated.div>
+      <animated.button
+        className="p-8 text-white"
+        style={{ x: styles.x }}
+        onClick={() => {
+          setIsPaused(!isPaused);
+        }}
+      >
+        Click Me
+      </animated.button>
     </div>
   );
 };
