@@ -1,6 +1,8 @@
 import { animated } from "@react-spring/web";
 import { useCallback } from "react";
+import Matrix from "../../../components/Matrix";
 import useGameStore from "../../../components/xo/useGameStore";
+import { getIndex } from "../../../helpers";
 
 const XoPage = () => {
   const isFirstPlayerTurn = useGameStore((state) => state.isFirstPlayerTurn);
@@ -14,7 +16,7 @@ const XoPage = () => {
       []
     )
   );
-  const setY = useGameStore(
+  const setO = useGameStore(
     useCallback(
       (state) => (x: number, y: number) => state.setValue(x, y, 2),
       []
@@ -31,48 +33,54 @@ const XoPage = () => {
       ) : (
         <p>2nd Player turn (O)</p>
       )}
-      {isWon === 1 ? (
+      {isWon.winner === 1 ? (
         <p>1st PLayer Wins (X)</p>
-      ) : isWon === 2 ? (
+      ) : isWon.winner === 2 ? (
         <p>2nd PLayer Wins (O)</p>
       ) : (
         <p>No one wins</p>
       )}
-      <div
-        className={`w-[300px] h-[300px] border border-black flex justify-center items-center flex-wrap box-border mx-auto mt-[40px] ${
+      <Matrix
+        className={`w-[500px] h-[300px] border border-black box-border mx-auto mt-[40px] ${
           isFirstPlayerTurn ? "bg-blue-100" : "bg-red-100"
         }`}
-      >
-        {gameMap.map((box) => (
+        x={3}
+        y={3}
+        gameMatrix={gameMap}
+        box={({ box: [x, y, boxValue], className }) => (
           <button
-            className={`w-[33%] h-[33%] border border-black box-border m-0 ${
-              isFirstPlayerTurn ? "hover:bg-blue-200" : "hover:bg-red-200"
+            className={`${className} border border-black box-border m-0 ${
+              isWon.sequence?.includes(getIndex(x, y, 3))
+                ? "bg-yellow-500"
+                : isFirstPlayerTurn
+                ? "hover:bg-blue-200"
+                : "hover:bg-red-200"
             }`}
             onClick={() => {
               if (isCompleted) return;
-              if (box[2]) return;
+              if (boxValue) return;
               if (isFirstPlayerTurn) {
-                setX(box[0], box[1]);
+                setX(x, y);
               } else {
-                setY(box[0], box[1]);
+                setO(x, y);
               }
             }}
-            key={box.join("")}
+            key={`${x}${y}`}
           >
             <animated.p
               className={`text-8xl font-black ${
-                box[2] === 1
+                boxValue === 1
                   ? "text-blue-800"
-                  : box[2] === 2
+                  : boxValue === 2
                   ? "text-red-800"
                   : ""
               }`}
             >
-              {box[2] === 1 ? "X" : box[2] === 2 ? "O" : ""}
+              {boxValue === 1 ? "X" : boxValue === 2 ? "O" : ""}
             </animated.p>
           </button>
-        ))}
-      </div>
+        )}
+      />
       <button onClick={reset}>Reset</button>
     </>
   );
