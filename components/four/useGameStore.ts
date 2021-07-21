@@ -1,6 +1,7 @@
 import create from "zustand";
 import { chunkArray, createMatrix, getIndex, getValues } from "../../helpers";
 import { XOGameStore } from "../../types";
+import checkCFWins from "./checkCFWins";
 
 const matrixChunkSize = 3;
 const matrixSizeX = 7;
@@ -34,26 +35,55 @@ const useGameStore = create<XOGameStore>((set, get) => ({
     );
   },
   // determine if either player has won
-  // return 0 (none), 1 (player1), 2 (player2)
-  //   isWon: () => {
-  //     const currentValues = get().gameValues();
-  //     const currentXValues = currentValues.reduce(
-  //       (acc, v, index) => (v === 1 ? [...acc, index] : acc),
-  //       []
-  //     );
-  //     const currentOValues = currentValues.reduce(
-  //       (acc, v, index) => (v === 2 ? [...acc, index] : acc),
-  //       []
-  //     );
-  //     const XWins = possibleWins.some((win) =>
-  //       win.every((v) => currentXValues.includes(v))
-  //     );
-  //     const OWins = possibleWins.some((win) =>
-  //       win.every((v) => currentOValues.includes(v))
-  //     );
-  //     return XWins ? 1 : OWins ? 2 : 0;
-  //   },
-  isWon: () => ({ winner: 0, sequence: null }),
+  isWon: () => {
+    const player1Map = get()
+      .gameValues()
+      .map((v, index) => {
+        if (v === 1) return index;
+        return null;
+      })
+      .filter((v) => v);
+    const player2Map = get()
+      .gameValues()
+      .map((v, index) => {
+        if (v === 2) return index;
+        return null;
+      })
+      .filter((v) => v);
+    const player1Won = player1Map.reduce(
+      (acc, point) => {
+        if (acc.winner > 0) return acc;
+        const sequence = checkCFWins(point, 7, 6).find((win) =>
+          win.every((v) => player1Map.includes(v))
+        );
+        if (sequence) {
+          return { winner: 1, sequence };
+        } else {
+          return acc;
+        }
+      },
+      { winner: 0, sequence: null }
+    );
+    const player2Won = player2Map.reduce(
+      (acc, point) => {
+        if (acc.winner > 0) return acc;
+        const sequence = checkCFWins(point, 7, 6).find((win) =>
+          win.every((v) => player2Map.includes(v))
+        );
+        if (sequence) {
+          return { winner: 2, sequence };
+        } else {
+          return acc;
+        }
+      },
+      { winner: 0, sequence: null }
+    );
+    return player1Won.winner
+      ? player1Won
+      : player2Won.winner
+      ? player2Won
+      : { winner: 0, sequence: null };
+  },
   //========= actions
   // generic function to update values inside boxes
   // it also toggles the player turn which should be separated in a another method TODO:
