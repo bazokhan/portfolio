@@ -13,6 +13,7 @@ import {
   DisplayObject,
   SCALE_MODES,
   settings,
+  Sprite as SpriteType,
   //   Sprite,
   Spritesheet,
   Text as TextType,
@@ -36,6 +37,9 @@ settings.SCALE_MODE = SCALE_MODES.NEAREST;
 type DragStore = {
   dragTarget: DisplayObject;
   setDragTarget: (dragTarget: DisplayObject) => void;
+};
+
+type CharacterStore = {
   point?: { x: number; y: number };
   setPoint?: ({ x, y }: { x: number; y: number }) => void;
 };
@@ -45,11 +49,20 @@ const useDragStore = create<DragStore>((set, get) => ({
   setDragTarget: (dragTarget) => {
     set({ dragTarget });
   },
-  point: { x: 200, y: 200 },
-  setPoint: (point) => {
-    set({ point });
-  },
 }));
+
+const createCharacterStore = (initialPosition) => {
+  const getStore = create<CharacterStore>((set, get) => ({
+    point: initialPosition,
+    setPoint: (point) => {
+      set({ point });
+    },
+  }));
+  return getStore;
+};
+
+const useCharacterStore1 = createCharacterStore({ x: 200, y: 200 });
+const useCharacterStore2 = createCharacterStore({ x: 400, y: 400 });
 
 const FlappyGame = () => {
   const app = useApp();
@@ -61,8 +74,7 @@ const FlappyGame = () => {
   //   const [textures, setTextures] = useState([]);
   const dragTarget = useDragStore((state) => state.dragTarget);
   const setDragTarget = useDragStore((state) => state.setDragTarget);
-  const point = useDragStore((state) => state.point);
-  const setPoint = useDragStore((state) => state.setPoint);
+
   //   const [dragTarget, setDragTarget]: [DisplayObject, any] = useState(null);
 
   //   useEffect(() => {
@@ -101,43 +113,88 @@ const FlappyGame = () => {
   //     )
   //   );
 
+  const character1 = useRef<SpriteType>();
+  const character2 = useRef<SpriteType>();
+
+  useEffect(() => {
+    if (character1?.current) {
+      character1.current.parent.toLocal(
+        { x: 200, y: 200 },
+        null,
+        character1.current.position
+      );
+    }
+    if (character2?.current) {
+      character2.current.parent.toLocal(
+        { x: 400, y: 400 },
+        null,
+        character2.current.position
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    const onDrag = (event) => {
+      if (dragTarget) {
+        dragTarget.parent.toLocal(event.data.global, null, dragTarget.position);
+      }
+    };
+    app.stage.addListener("pointermove", onDrag);
+    return () => {
+      app.stage.removeListener("pointermove", onDrag);
+    };
+  }, [app.stage, dragTarget]);
+
   return (
     <>
       {/* <Graphics draw={drawFlappy} /> */}
       <Container>
         <Sprite
+          ref={character1}
           image="https://s3-us-west-2.amazonaws.com/s.cdpn.io/693612/IaUrttj.png"
           scale={4}
-          position={point}
           anchor={0.5}
           interactive
           buttonMode
-          click={(e) => {
-            setPoint(e.data.global);
-            setDragTarget(e.target);
-          }}
+          //   click={(e) => {
+          //     setPoint(e.data.global);
+          //     console.log("BOOM");
+          //     setDragTarget(e.target);
+          //   }}
           pointerdown={(e) => {
-            setPoint(e.data.global);
-            setDragTarget(e.target);
-            app.stage.addListener("pointermove", (event) => {
-              if (dragTarget || e.target) {
-                setPoint(
-                  (dragTarget || e.target).parent.toLocal(
-                    event.data.global,
-                    null,
-                    (dragTarget || e.target).position
-                  )
-                );
-              }
-            });
+            if (e.target) {
+              setDragTarget(e.target);
+            }
           }}
           pointerup={(e) => {
-            setDragTarget(e.target);
-            app.stage.removeAllListeners();
+            setDragTarget(null);
           }}
           pointerupoutside={(e) => {
-            setDragTarget(e.target);
-            app.stage.removeAllListeners();
+            setDragTarget(null);
+          }}
+        />
+        <Sprite
+          ref={character2}
+          image="https://s3-us-west-2.amazonaws.com/s.cdpn.io/693612/IaUrttj.png"
+          scale={4}
+          anchor={0.5}
+          interactive
+          buttonMode
+          //   click={(e) => {
+          //     setPoint(e.data.global);
+          //     console.log("BOOM");
+          //     setDragTarget(e.target);
+          //   }}
+          pointerdown={(e) => {
+            if (e.target) {
+              setDragTarget(e.target);
+            }
+          }}
+          pointerup={(e) => {
+            setDragTarget(null);
+          }}
+          pointerupoutside={(e) => {
+            setDragTarget(null);
           }}
         />
       </Container>
